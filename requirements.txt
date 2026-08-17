@@ -1,0 +1,29 @@
+# LUX — Local RAG Knowledge Assistant
+# Core dependencies
+
+# Microsoft Foundry Local SDK (Windows with hardware acceleration)
+foundry-local-sdk-winml>=1.0.0
+
+# OpenAI-compatible client for Foundry Local
+openai>=1.30.0
+
+# API server
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# PDF parsing
+pymupdf>=1.24.0
+
+# Environment configuration
+python-dotenv>=1.0.0
+
+# Data validation
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# Utilities
+numpy>=1.26.0

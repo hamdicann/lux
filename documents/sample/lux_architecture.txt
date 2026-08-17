@@ -1,0 +1,77 @@
+LUX Architecture Overview
+=========================
+
+LUX is a local AI knowledge assistant built around Retrieval-Augmented Generation (RAG). This document describes its architecture and data flow.
+
+System Architecture
+-------------------
+
+LUX follows a layered architecture with clear separation of concerns:
+
+1. Client Layer: The user interface (web UI or CLI) that accepts questions and displays answers.
+
+2. Application Layer: The orchestrator that coordinates the entire pipeline — routing, retrieval, context assembly, and generation.
+
+3. Retrieval Layer: The embedding, similarity search, and ranking components that find relevant document chunks.
+
+4. Storage Layer: SQLite database storing documents, chunks, embeddings, conversations, and application state.
+
+5. Inference Layer: Microsoft Foundry Local providing local LLM and embedding model execution.
+
+Data Flow
+---------
+
+When a user asks a question, the following steps occur:
+
+Step 1 - Query Classification: The router determines whether the query needs document retrieval (RAG query) or can be handled as simple conversation (chat).
+
+Step 2 - Query Embedding: For RAG queries, the user's question is converted to an embedding vector using the local embedding model.
+
+Step 3 - Vector Search: The query embedding is compared against all stored chunk embeddings using cosine similarity. The top-K most similar chunks are selected.
+
+Step 4 - Ranking and Filtering: Results are deduplicated, ranked by relevance, and trimmed to fit within the context budget.
+
+Step 5 - Context Assembly: The selected chunks are formatted into a structured context block with source metadata.
+
+Step 6 - Prompt Construction: The system prompt, conversation history, retrieved context, and user question are assembled into a message list.
+
+Step 7 - LLM Generation: The message list is sent to the local LLM through Foundry Local. The model generates a grounded response.
+
+Step 8 - Response Validation: The response is checked for quality (non-empty, sufficient length) and sanitized.
+
+Step 9 - Source Attribution: Sources from the retrieved chunks are attached to the response.
+
+Document Ingestion Pipeline
+---------------------------
+
+Before questions can be answered, documents must be ingested:
+
+1. File Detection: The ingestion system scans a directory for supported files (TXT, Markdown, PDF).
+
+2. Text Extraction: Each file is loaded using the appropriate parser. PDFs are processed with PyMuPDF; text and markdown files are read directly.
+
+3. Hash Check: A SHA-256 hash of the file content is computed. If the same hash already exists in the database, the file is skipped to prevent duplicate ingestion.
+
+4. Text Normalization: The extracted text is cleaned — Unicode normalized, whitespace regularized, encoding issues fixed.
+
+5. Chunking: The normalized text is split into overlapping chunks. The chunker prefers paragraph boundaries but falls back to sentence and word boundaries for very long paragraphs.
+
+6. Embedding Generation: Each chunk's text is passed through the local embedding model to generate a vector representation.
+
+7. Persistence: The document metadata, chunks, and embeddings are stored in the SQLite database.
+
+Configuration
+-------------
+
+All tunable parameters are centralized in a single configuration module:
+
+- LUX_CHAT_MODEL: The local LLM model alias (e.g., phi-3.5-mini)
+- LUX_EMBEDDING_MODEL: The embedding model alias (e.g., qwen3-embedding-0.6b)
+- LUX_CHUNK_SIZE: Target chunk size in characters (default: 800)
+- LUX_CHUNK_OVERLAP: Overlap between chunks in characters (default: 120)
+- LUX_TOP_K: Number of chunks to retrieve (default: 3)
+- LUX_MIN_SIMILARITY: Minimum cosine similarity threshold (default: 0.35)
+- LUX_TEMPERATURE: LLM temperature for generation (default: 0.2)
+- LUX_DEBUG: Enable debug information in responses (default: false)
+
+These values can be set via environment variables or a .env file.

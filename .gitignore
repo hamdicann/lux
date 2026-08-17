@@ -1,0 +1,30 @@
+# CPython
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite Database
+data/*.db
+data/*.sqlite3
+data/*.db-journal
+
+# Logs
+*.log
+logs/
+
+# MacOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+*.swp

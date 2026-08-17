@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUX - Yerel Yapay Zeka Bilgi Asistani</title>
+    <meta name="description" content="LUX, tamamen yerel ve cevrimdisi calisan, RAG ve Microsoft Foundry Local tabanli bir yapay zeka bilgi asistanidir.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+
+    <!-- Kenar Cubugu -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <img src="lux_logo.png" class="logo-icon" alt="LUX">
+                <h1 class="logo-text">LUX</h1>
+            </div>
+            <p class="logo-subtitle">Yerel Yapay Zeka Asistani</p>
+        </div>
+
+        <button class="btn btn-primary btn-new-chat" id="btn-new-chat">
+            <span class="btn-icon">+</span> Yeni Sohbet
+        </button>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <h3 class="nav-section-title">Sohbet Gecmisi</h3>
+                <div class="conversation-list" id="conversation-list">
+                    <p class="empty-state" id="conv-empty">Henuz sohbet yok</p>
+                </div>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-ghost btn-sidebar" id="btn-documents" title="Dokumanlar">
+                <span class="btn-icon">D</span> Dokumanlar
+            </button>
+            <button class="btn btn-ghost btn-sidebar" id="btn-settings" title="Ayarlar">
+                <span class="btn-icon">A</span> Ayarlar
+            </button>
+        </div>
+    </aside>
+
+    <!-- Ana Icerik -->
+    <main class="main-content">
+        <!-- Ust Cubuk -->
+        <header class="top-bar">
+            <button class="btn btn-ghost btn-menu" id="btn-menu">M</button>
+            <div class="top-bar-status">
+                <div class="status-dot" id="status-dot"></div>
+                <span class="status-text" id="status-text">Baglaniyor...</span>
+            </div>
+            <div class="top-bar-actions">
+                <label class="toggle-label" title="Hata ayiklama bilgisi goster">
+                    <input type="checkbox" id="toggle-debug"> Debug
+                </label>
+                <label class="toggle-label" title="Kaynak alintilari goster">
+                    <input type="checkbox" id="toggle-sources" checked> Kaynaklar
+                </label>
+            </div>
+        </header>
+
+        <!-- Sohbet Alani -->
+        <div class="chat-area" id="chat-area">
+            <!-- Karsilama Ekrani -->
+            <div class="welcome" id="welcome-screen">
+                <img src="lux_logo.png" class="welcome-icon" alt="LUX">
+                <h2 class="welcome-title">LUX'a Hosgeldiniz</h2>
+                <p class="welcome-subtitle">Yerel yapay zeka bilgi asistaniniz. Dokumanlariniz hakkinda sorular sorun - her sey bilgisayarinizda calisir.</p>
+                <div class="welcome-features">
+                    <div class="feature-card">
+                        <span class="feature-icon">S</span>
+                        <span class="feature-text">Dokumanlarinizi arayin</span>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">G</span>
+                        <span class="feature-text">Tamamen yerel ve gizli</span>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">K</span>
+                        <span class="feature-text">Kaynak gosterimi</span>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">C</span>
+                        <span class="feature-text">Cevrimdisi calisir</span>
+                    </div>
+                </div>
+                <div class="welcome-suggestions">
+                    <p class="suggestion-label">Sunu deneyin:</p>
+                    <button class="suggestion-btn" data-query="RAG nedir ve nasil calisir?">RAG nedir?</button>
+                    <button class="suggestion-btn" data-query="SQLite neden yerel depolama icin uygundur?">Neden SQLite?</button>
+                    <button class="suggestion-btn" data-query="Kara delik nedir?">Kara delik nedir?</button>
+                </div>
+            </div>
+
+            <!-- Mesajlar Alani -->
+            <div class="messages" id="messages-container">
+                <!-- Mesajlar dinamik olarak doldurulur -->
+            </div>
+        </div>
+
+        <!-- Giris Alani -->
+        <div class="input-area">
+            <div class="input-container">
+                <textarea
+                    class="chat-input"
+                    id="chat-input"
+                    placeholder="LUX'a bir soru sorun..."
+                    rows="1"
+                    autofocus
+                ></textarea>
+                <button class="btn btn-send" id="btn-send" disabled>
+                    <span class="send-icon">></span>
+                </button>
+            </div>
+            <p class="input-hint">LUX yerel olarak calisir - verileriniz bilgisayarinizdan hic cikmaz</p>
+        </div>
+    </main>
+
+    <!-- Dokuman Paneli (Katman) -->
+    <div class="panel-overlay" id="documents-panel" style="display: none;">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Dokuman Yonetimi</h2>
+                <button class="btn btn-ghost btn-close-panel" id="btn-close-docs">X</button>
+            </div>
+            <div class="panel-body">
+                <div class="panel-section">
+                    <h3>Bilgi Tabani Durumu</h3>
+                    <div class="kb-stats" id="kb-stats">
+                        <div class="stat-card">
+                            <span class="stat-value" id="stat-docs">-</span>
+                            <span class="stat-label">Dokuman</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-value" id="stat-chunks">-</span>
+                            <span class="stat-label">Parca</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-value" id="stat-db-size">-</span>
+                            <span class="stat-label">Veritabani</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>Islemler</h3>
+                    <button class="btn btn-primary" id="btn-ingest">
+                        <span class="btn-icon">+</span> Dokumanlari Iceri Aktar
+                    </button>
+                    <div class="ingest-status" id="ingest-status" style="display: none;"></div>
+                </div>
+                <div class="panel-section">
+                    <h3>Indekslenen Dokumanlar</h3>
+                    <div class="document-list" id="document-list">
+                        <p class="empty-state">Henuz dokuman indekslenmedi</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ayarlar Paneli (Katman) -->
+    <div class="panel-overlay" id="settings-panel" style="display: none;">
+        <div class="panel settings-panel">
+            <div class="panel-header">
+                <h2>Ayarlar</h2>
+                <button class="btn btn-ghost btn-close-panel" id="btn-close-settings">X</button>
+            </div>
+            <div class="panel-body">
+                <div class="panel-section">
+                    <h3>Tema Rengi</h3>
+                    <div class="theme-options">
+                        <button class="theme-btn active" data-color="#b198ff" style="--btn-color: #b198ff;">Mor</button>
+                        <button class="theme-btn" data-color="#60a5fa" style="--btn-color: #60a5fa;">Mavi</button>
+                        <button class="theme-btn" data-color="#34d399" style="--btn-color: #34d399;">Zümrüt</button>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>Davranış</h3>
+                    <label class="toggle-label setting-toggle">
+                        <input type="checkbox" id="setting-autoscroll" checked>
+                        <span>Yeni mesaj geldiğinde otomatik kaydır</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=2"></script>
+</body>
+</html>
